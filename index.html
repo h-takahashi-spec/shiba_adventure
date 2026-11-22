@@ -1660,7 +1660,7 @@ function setupTouch(){
  const pad=$('pad'),cells=[...pad.children];let pid=null;
  const setDir=(keys)=>{const same=keys.length===padKeys.length&&keys.every(k=>padKeys.includes(k));if(same)return;
   const modal=TITLE||MENU||DLG||PRO;padKeys.forEach(k=>{if(!keys.includes(k))fk(k,false);});
-  if(modal){const v=keys.find(k=>k==='ArrowUp'||k==='ArrowDown');if(v&&!padKeys.includes(v))fk(v,true);}
+  if(modal){const v=keys.length===1?keys.find(k=>k==='ArrowUp'||k==='ArrowDown'||(TITLE&&(k==='ArrowLeft'||k==='ArrowRight'))):keys.find(k=>k==='ArrowUp'||k==='ArrowDown');if(v&&!padKeys.includes(v))fk(v,true);}
   else keys.forEach(k=>{if(!padKeys.includes(k))fk(k,true);});
   padKeys=keys;chordT=now()-100;};
  const mv=e=>{const r=pad.getBoundingClientRect(),c=Math.max(0,Math.min(2,Math.floor((e.clientX-r.left)/(r.width/3)))),w=Math.max(0,Math.min(2,Math.floor((e.clientY-r.top)/(r.height/3))));
