@@ -62,6 +62,7 @@ body.touch #win.title .w{font-size:clamp(17px,2.2vh,21px)}body.touch #win.title{
 .r.sel::before{content:'▶';position:absolute;left:.15em;font-size:.8em;top:.12em;animation:bl .9s steps(2) infinite}
 .r.sel{color:#fff7c8}
 .r img{width:1.35em;height:1.35em;image-rendering:pixelated;vertical-align:-6px;margin-right:6px}
+.r.pick{color:#9ff0b4}.r.pick.sel{color:#d6ffe0}.r .pk{display:inline-block;margin-left:.6em;padding:0 .45em;font-size:.68em;line-height:1.55;vertical-align:.12em;border-radius:6px;background:#3f9a62;color:#f4fff6;letter-spacing:.04em}
 .r .eq{color:#8fe0a0;font-size:.75em;margin-right:4px}
 .help{font-size:.78em;line-height:1.7;white-space:pre-wrap;color:#e8e9ff}
 .dlg{max-width:96vw!important;width:min(1500px,96vw);min-height:4.2em;display:flex;gap:16px;align-items:flex-start;position:relative;cursor:pointer}
@@ -827,7 +828,7 @@ function doghouseMenu(){
 function storageMenu(sel){
  if(!META.storage.length){showDialog(['犬小屋には まだ なにも ない。','かえりみちのお守りで もちかえった どうぐや、お店で かった どうぐは ここに しまわれる。']);return;}
  const n=META.storage.filter(i=>i.sel).length;
- openMenu({title:' しまってある どうぐ',desc:`もっていく：${n}/${META.house}こ`,sel,items:META.storage.map((it,i)=>({label:`${it.sel?'':'　'} ${itemIcon(it)} ${itemName(it)}`,fn:()=>storageItem(it,i)})).concat([{label:'― せいとんする ―',fn:()=>{META.storage.sort((a,b)=>(b.sel?1:0)-(a.sel?1:0)||CAT_ORD.indexOf(a.cat)-CAT_ORD.indexOf(b.cat)||String(a.id).localeCompare(String(b.id))||(b.plus||0)-(a.plus||0));save();storageMenu(0);}},{label:'もどる',fn:doghouseMenu}]),onCancel:doghouseMenu});}
+ openMenu({title:' しまってある どうぐ',desc:`もっていく：${n}/${META.house}こ`,sel,items:META.storage.map((it,i)=>({label:itemName(it),icon:HEADLESS?'':url(itemSpr(it)),pick:!!it.sel,fn:()=>storageItem(it,i)})).concat([{label:'― せいとんする ―',fn:()=>{META.storage.sort((a,b)=>(b.sel?1:0)-(a.sel?1:0)||CAT_ORD.indexOf(a.cat)-CAT_ORD.indexOf(b.cat)||String(a.id).localeCompare(String(b.id))||(b.plus||0)-(a.plus||0));save();storageMenu(0);}},{label:'もどる',fn:doghouseMenu}]),onCancel:doghouseMenu});}
 function storageItem(it,i){
  const n=META.storage.filter(x=>x.sel).length;
  openMenu({title:`${itemIcon(it)} ${itemName(it)}`,desc:itemDesc(it),items:[
@@ -859,7 +860,7 @@ function openMenu(o){MENU=Object.assign({},o,{sel:clamp(o.sel||0,0,o.items.lengt
 function renderMenu(){
  if(HEADLESS)return;const m=MENU,el=$('win');el.className='open'+(m.isTitle?' title':'');
  let h='<div class="w">';if(m.title)h+=`<div class="wt">${esc(m.title.trim())}</div>`;if(m.desc)h+=`<div class="wd">${esc(m.desc)}</div>`;h+=(m.html||'');
- m.items.forEach((it,i)=>{h+=`<div class="r${i===m.sel?' sel':''}" data-i="${i}">${it.icon?`<img src="${it.icon}" alt="">`:''}${it.eq?'<span class="eq">E</span>':''}${esc(it.label.trim())}</div>`;});
+ m.items.forEach((it,i)=>{h+=`<div class="r${i===m.sel?' sel':''}${it.pick?' pick':''}" data-i="${i}">${it.icon?`<img src="${it.icon}" alt="">`:''}${it.eq?'<span class="eq">E</span>':''}${esc(it.label.trim())}${it.pick?'<span class="pk">もっていく</span>':''}</div>`;});
  el.innerHTML=h+'</div>';
  el.querySelectorAll('.r').forEach(b=>b.onclick=e=>{e.stopPropagation();chooseMenu(+b.dataset.i);});
  const s=el.querySelector('.r.sel');if(s&&s.scrollIntoView)s.scrollIntoView({block:'nearest'});}
