@@ -1263,7 +1263,7 @@ const FSPOT=[[18,11],[22,11],[18,17],[22,17],[17,14],[23,15],[20,18],[20,28]];
 function endMeet(){const p=G.p;p.x=20;p.y=2;p.face=[0,1];FOL.x=20;FOL.y=4;FOL.face=[0,-1];TW.delete(p);TW.delete(FOL);G.meet=true;}
 function meetStep(){if(!G.meet)return;tween(FOL,260);FOL.y=3;FOL.face=[0,-1];sfx('tick');}
 function startEpilogue(){
- G.meet=false;vfStart();G.epi=true;Trk.want='town';EP.talked={};EP.inv=0;EP.out=0;EP.flash=0;EP.t0=now();EP.s0=Song.el?Song.el.currentTime:0;EP.cap=-1;EP.done=0;
+ G.meet=false;vfStart();G.epi=true;Trk.want=null;EP.talked={};EP.inv=0;EP.out=0;EP.flash=0;EP.t0=now();EP.s0=Song.el?Song.el.currentTime:0;EP.cap=-1;EP.done=0;
  TNPC.forEach((n,i)=>{n.ox=n.hx;n.oy=n.hy;n.or=n.r;if(!n.still){n.hx=FSPOT[i][0];n.hy=FSPOT[i][1];n.r=3;n.x=n.hx;n.y=n.hy;}});
  G.p.x=20;G.p.y=19;G.p.face=[0,-1];FOL.x=20;FOL.y=20;FOL.face=[0,-1];G.log=[];msg(TOUCH?'おまつりの夜。すきに あるいて、みんなと はなそう。':'おまつりの夜。すきに あるいて、みんなと はなそう。（Tab：メニュー）');updateUI();}
 function endEpilogue(){if(DEMO){stopAllMusic();location.reload();return;}if(!G.epi)return;vfStop();G.epi=false;TNPC.forEach(n=>{if(n.ox!=null){n.hx=n.ox;n.hy=n.oy;n.r=n.or;n.x=n.hx;n.y=n.hy;}});
@@ -1278,7 +1278,7 @@ function epiTick(){
  const el=Song.el,wall=(now()-EP.t0)/1000,t=(el&&!el.paused)?el.currentTime:EP.s0+wall;
  let ci=-1;for(let i=0;i<CAPS.length;i++)if(t>=CAPS[i][0])ci=i;
  if(now()>EP.fw){EP.fw=now()+650+Math.random()*900;EP.nf=(EP.nf||0)+1;if(EP.nf%12===0)festShot(1);else{festShot();if(Math.random()<0.4)setTimeout(()=>festShot(),260);if(Math.random()<0.15)setTimeout(()=>festShot(),520);}}
- if(!EP.done&&((!Song.playing&&wall>10)||t>453)){EP.done=1;trackKick();}}
+ if(!Song.playing&&wall>10&&!FIN&&!HEADLESS){songPlay(0.9,0);EP.t0=now();EP.s0=0;}}
 
 /* ====================== おまつり → 村の外の花火 ====================== */
 const EPI_PEOPLE=['ゲンじい','ケンタ','ハナさん','たびびと','つりびと','タマ','ゴン','おばあさん'];
