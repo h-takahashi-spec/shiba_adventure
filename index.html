@@ -1527,7 +1527,7 @@ function pastFinale(){if(!G.past||G.mode!=='tower'){inputLock=false;return;}cons
      setTimeout(()=>{g.stone=2;requestRender();},900);setTimeout(()=>{g.stone=0;requestRender();},1900);setTimeout(()=>D(['チビは、スカーフに 顔を うずめた。','こちらの すがたは、見えていない。それでも、においだけは とどいた。','かべの 色が、足もとから すうっと ひいていく。','しっぽが、ゆっくりと ゆれはじめる。','チビは スカーフを くわえて、きた 道の ほうを むいた。'],()=>{
       G.deco=G.deco.filter(d=>d.k!=='scarf');g.ns=0;emote(g,'♪','#ffe08a');
       let best=null,bd=-1;for(let k=0;k<80;k++){const t=randFree(t=>!(t.x===p.x&&t.y===p.y));if(!t)continue;const d=cheb(t,g);if(d>bd){bd=d;best=t;}}G.stairs=best||{x:g.x,y:g.y};G.stDown=true;
-      stopAllMusic();Music.name=null;Trk.hold=false;trackPlay('past_theme');{const e=Trk.els.past_theme;if(e){e.loop=false;e.onended=()=>{Trk.cur=null;};}}updateUI();
+      stopAllMusic();Music.name=null;Trk.hold=false;trackPlay('past_theme');{const e=Trk.els.past_theme;if(e){e.loop=false;e.onended=()=>{Trk.cur=null;Trk.want=null;};}}updateUI();
       setTimeout(()=>{G.lit2=g;const rev=()=>{for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const x=g.x+dx,y=g.y+dy;if(x<0||y<0||x>=G.w||y>=G.h)continue;vis[y*G.w+x]=1;G.exp[y*G.w+x]=1;}requestRender();};rev();const rt=setInterval(()=>{if(G.lit2!==g||g.gone){clearInterval(rt);return;}rev();},100);actGo(g,pathTo(g,G.stairs.x,G.stairs.y),()=>{rev();setTimeout(()=>{g.gone=true;G.lit2=null;requestRender();},350);},150);
        setTimeout(()=>D(['ひかりは、だれにも くわえられない まま、星の なかで ひかっている。',`${META.name}は、ちいさな せなかを 見おくった。`,'……あの子の ところへ、かえるんだ。'],()=>{aFade(1,900);setTimeout(autoStart,1000);}),1900);},700);}),500);},260);},800);}),600);});}
 const AUTO_FL=[[95,'はやく。はやく。'],[90,''],[84,'のぼる ときは、ながいと 思わなかった 道。'],[78,''],[71,'スカーフを、いちども はなさない。'],[64,''],[57,'きずが ふえる。それでも、足は とまらない。'],[50,''],[43,'まっている 人の においが、つよく なる。'],[36,''],[29,'ころんでも、すぐに 立つ。'],[25,'まっしろな 本の へやを、ふりかえらずに かけぬけた。'],[20,''],[15,'かえる。かえる。かえる。'],[10,'まどの むこうに、まちの あかりが 見える。'],[6,''],[3,'足が もつれる。それでも、はしる。'],[1,'もう すこし。……もう すこし。']];
@@ -1639,7 +1639,7 @@ function rollStart(){if(ROLL||HEADLESS)return;closeModal();const st=$('stage'),F
  const R=ROLL={tm:[],iv:[],endable:false};inputLock=true;FT_UNTIL=1e15;held.clear();armed.clear();
  const T=(ms,fn)=>R.tm.push(setTimeout(()=>{if(ROLL===R)fn();},ms));
  Trk.hold=true;trackFade(5200);aFade(1,4200);
- T(6000,()=>{stopAllMusic();trackPlay('ending');const e=Trk.els.ending;if(e){e.loop=false;e.onended=()=>{Trk.cur=null;};}
+ T(6000,()=>{stopAllMusic();trackPlay('ending');const e=Trk.els.ending;if(e){e.loop=false;e.onended=()=>{Trk.cur=null;Trk.want=null;};}
   applyNewTown();document.body.classList.add('fin');G.alone=true;G.wg=null;G.p.x=20;G.p.y=6;TW.delete(G.p);CAMO.x=CAMO.y=0;G.tcam=[0,0];updateUI();snapView();});
  const WP=[[20,6],[20,13],[12,12],[14,18],[20,21],[27,20],[30,12],[35,10]];
  T(7400,()=>{aFade(0,2600);rollFx(R);
@@ -2362,7 +2362,7 @@ function initAudio(){
   Music.next=AC.currentTime+0.2;setInterval(musicTick,40);}
  if(AC.state==='suspended')AC.resume().catch(()=>{});}
 function musicTick(){
- if(!AC||!Music.th)return;const sp=60/(Music.th.bpm+Music.bonus)/2,on=META&&META.sound&&!Song.playing&&!Trk.cur&&!Trk.hold;
+ if(!AC||!Music.th)return;const sp=60/(Music.th.bpm+Music.bonus)/2,on=META&&META.sound&&!Song.playing&&!Trk.cur&&!Trk.want&&!Trk.hold;
  if(synG&&synG._on!==on){synG._on=on;try{synG.gain.cancelScheduledValues(AC.currentTime);synG.gain.setTargetAtTime(on?1:0,AC.currentTime,on?0.3:0.1);}catch(e){}}
  if(Music.next<AC.currentTime)Music.next=AC.currentTime+0.05;
  while(Music.next<AC.currentTime+0.25){if(on)playStep(Music.step,Music.next,sp);Music.step++;Music.next+=sp;}}
@@ -2408,48 +2408,58 @@ function playStep(st,t,sp){
   else{voice('square',N(d),t,0.04,dur*0.92,musicBus,1700);voice('sawtooth',N(d+7),t,0.016,dur*0.9,musicBus,2400);}
   if(T.harm)bell(N(d-2),t,0.035,1.1);}}}
 function hookA(e){if(e._g||!AC||HEADLESS)return;try{const src=AC.createMediaElementSource(e),g=AC.createGain();src.connect(g);g.connect(AC.destination);e._g=g;e.volume=1;}catch(x){e._g=null;}}
-function setV(e,v){if(!e)return;hookA(e);if(e._g)e._g.gain.value=v;else e.volume=Math.max(0,Math.min(1,v));}
-function getV(e){if(!e)return 0;return e._g?e._g.gain.value:e.volume;}
-function trkUnlock(){if(HEADLESS||typeof Audio==='undefined'||!META)return;if(SCN||AUTO||ROLL||FIN||HEND||(G&&(G.tcam||G.auto||G.lit2)))return;const need=[];
- if(G&&(G.epi||G.meet))need.push('opening');
- if(META.pastDone)need.push('ending','opening');
- if(G&&(G.past||G.ptown||(META.scarf&&META.clears>0)))need.push('past_theme','past_piano');
- for(const name of need){if(Trk.cur===name)continue;let e=Trk.els[name];if(e&&(e._unl||e._used))continue;if(!e){e=Trk.els[name]=new Audio(name+'.mp3');e.loop=true;e.preload='auto';}
-  e._unl=true;try{setV(e,0);e.muted=true;const p=e.play();const done=()=>{if(Trk.cur!==name){try{e.pause();e.currentTime=0;}catch(x){}}e.muted=false;};if(p&&p.then)p.then(done).catch(()=>{e._unl=false;e.muted=false;});else done();}catch(x){e._unl=false;}}}
-['touchend','pointerup','keydown','click'].forEach(ev=>window.addEventListener(ev,()=>{try{trkUnlock();}catch(x){}},{capture:true,passive:true}));
-const TWD={t:0,ct:-1,since:0,el:null};
-setInterval(()=>{if(HEADLESS||!META||!META.sound)return;const n=Trk.cur,e=n&&Trk.els[n];let bad=false;
- if(e&&!e.ended){const ct=e.currentTime||0;if(e.paused)bad=true;else if(ct===TWD.ct&&TWD.el===e)bad=true;TWD.ct=ct;TWD.el=e;}
- if(AC&&AC.state&&AC.state!=='running'&&(n||Song.playing))bad=true;
- if(Song.playing&&Song.el&&Song.el.paused&&!Song.el.ended)bad=true;
- if(!bad){TWD.since=0;trkPill(false);return;}
- if(!TWD.since)TWD.since=now();
- try{if(AC&&AC.state!=='running')AC.resume().catch(()=>{});}catch(x){}
- try{if(e&&e.paused&&!e.ended){const p=e.play();if(p&&p.catch)p.catch(()=>{});}if(Song.playing&&Song.el&&Song.el.paused&&!Song.el.ended){const p=Song.el.play();if(p&&p.catch)p.catch(()=>{});}}catch(x){}
- if(now()-TWD.since>2200&&TOUCH)trkPill(true);},700);
-function trkPill(on){let el=$('trkpill');if(!on){if(el)el.style.opacity=0;return;}if(!el){el=document.createElement('div');el.id='trkpill';el.style.cssText='position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:99;background:rgba(20,16,48,.82);color:#fff7e0;border:2px solid rgba(255,240,210,.8);border-radius:999px;padding:6px 14px;font:700 14px "Noto Sans JP",sans-serif;letter-spacing:.06em;pointer-events:none;transition:opacity .4s;opacity:0';el.textContent='♪ タップで 音楽を さいかい';document.body.appendChild(el);}el.style.opacity=1;}
-function trkRetry(){TWD.since=0;trkPill(false);if(HEADLESS)return;try{initAudio();}catch(x){}try{if(Song.playing&&Song.el&&Song.el.paused&&!Song.el.ended)Song.el.play().catch(()=>{});}catch(x){}const w=Trk.want;if(!w||Song.playing)return;const e=Trk.els[Trk.cur];if(Trk.cur===w&&e&&e.paused){const p=e.play();if(p&&p.catch)p.catch(()=>{});}else if(!Trk.cur)trackKick();}
-['touchend','click','keyup'].forEach(ev=>window.addEventListener(ev,()=>{setTimeout(()=>{},0);try{trkRetry();}catch(x){}},{passive:true}));
-const Trk={els:{},cur:null,want:null,hold:false},TRK_VOL={town:0.5,opening:0.6,past_piano:0.6,past_theme:0.8,past_jazz:0.5,ending:0.8};
-function trackHalt(){if(!Trk.cur)return;const e=Trk.els[Trk.cur];Trk.cur=null;let v=getV(e);clearInterval(e._f);e._f=setInterval(()=>{v-=0.07;if(v<=0.01){setV(e,0);e.pause();clearInterval(e._f);}else setV(e,v);},40);}
+/* ---- 音楽は ひとつの audio 要素で ながす（iPhone 対策） ---- */
+const MP=(typeof Audio!=='undefined'&&!HEADLESS)?new Audio():null,FAC={};let MPtok=0,MPok=false;
+if(MP){MP.preload='auto';MP._name=null;MP.addEventListener('ended',()=>{const f=FAC[MP._name];if(f&&f.onended)f.onended();});MP.addEventListener('playing',()=>{MPok=true;});}
+function mpSwitch(f){if(!MP)return;if(MP._name!==f.name){MP._name=f.name;MP.src=f.name+'.mp3';}MP.loop=f._loop;setV(f,f._v||0);}
+function fac(name){if(FAC[name])return FAC[name];const f={_fac:true,name,_loop:name!=='theme',_v:0,onended:null,_f:null,
+ get loop(){return this._loop},set loop(v){this._loop=v;if(MP&&MP._name===name)MP.loop=v;},
+ get paused(){return !MP||MP._name!==name||MP.paused},get ended(){return !!MP&&MP._name===name&&MP.ended},
+ get currentTime(){return MP&&MP._name===name?MP.currentTime:0},set currentTime(v){if(MP&&MP._name===name){try{MP.currentTime=v;}catch(x){}}},
+ play(){if(!MP)return Promise.reject(new Error('noaudio'));mpSwitch(this);let p;try{p=MP.play();}catch(x){return Promise.reject(x);}return p&&p.then?p:Promise.resolve();},
+ pause(){if(MP&&MP._name===name)MP.pause();},load(){},addEventListener(){}};return FAC[name]=f;}
+function setV(e,v){if(!e)return;if(e._fac){e._v=v;if(!MP||MP._name!==e.name)return;e=MP;}hookA(e);if(e._g)e._g.gain.value=v;else e.volume=Math.max(0,Math.min(1,v));}
+function getV(e){if(!e)return 0;if(e._fac){if(!MP||MP._name!==e.name)return e._v||0;e=MP;}return e._g?e._g.gain.value:e.volume;}
+const TRK_VOL={town:0.5,opening:0.6,past_piano:0.6,past_theme:0.8,past_jazz:0.5,ending:0.8};
+const Trk={els:new Proxy({},{get:(o,k)=>typeof k==='string'&&TRK_VOL[k]!=null?fac(k):undefined,set:()=>true,has:(o,k)=>!!FAC[k],
+ ownKeys:()=>Object.keys(FAC).filter(k=>k!=='theme'),getOwnPropertyDescriptor:(o,k)=>FAC[k]&&k!=='theme'?{enumerable:true,configurable:true,value:FAC[k]}:undefined}),cur:null,want:null,hold:false};
+function trackHalt(){if(!Trk.cur)return;const e=fac(Trk.cur);Trk.cur=null;let v=getV(e);clearInterval(e._f);e._f=setInterval(()=>{v-=0.07;if(v<=0.01){setV(e,0);e.pause();clearInterval(e._f);}else setV(e,v);},40);}
 function trackStop(){Trk.want=null;trackHalt();}
 function trackPlay(name){
- if(HEADLESS||typeof Audio==='undefined')return;if(name==='town'&&Trk.hold)return;
- Trk.want=name;if(Song.playing)return;const vol=META&&META.sound?TRK_VOL[name]:0;
- if(Trk.cur===name){const e=Trk.els[name];setV(e,vol);if(e.paused){const p=e.play();if(p&&p.catch)p.catch(()=>{});}return;}
- trackHalt();let e=Trk.els[name];if(!e){e=Trk.els[name]=new Audio(name+'.mp3');e.loop=true;e.preload='auto';}
- clearInterval(e._f);if(e._used){try{e.pause();}catch(x){}e.loop=true;}e._used=true;Trk.cur=name;setV(e,0);try{e.currentTime=0;}catch(x){}const p=e.play();const up=()=>setTimeout(()=>{if(Trk.cur===name){try{if(e.currentTime>2)e.currentTime=0;}catch(x){}setV(e,vol);}},80);if(p&&p.then)p.then(up).catch(()=>{});else up();}
-function stopAllMusic(){for(const k in Trk.els){const e=Trk.els[k];clearInterval(e._f);setV(e,0);e.pause();try{e.currentTime=0;}catch(x){}}Trk.cur=null;Trk.want=null;if(Song.el){clearInterval(Song.fadeT);setV(Song.el,0);Song.el.pause();try{Song.el.currentTime=0;}catch(x){}}Song.playing=false;}
+ if(HEADLESS||!MP)return;if(name==='town'&&Trk.hold)return;
+ Trk.want=name;if(Song.playing)return;const vol=META&&META.sound?TRK_VOL[name]:0,e=fac(name);
+ if(Trk.cur===name){setV(e,vol);if(e.paused&&!e.ended){e.play().catch(()=>{});}return;}
+ const prev=MP._name&&FAC[MP._name],busy=prev&&prev!==e&&!MP.paused&&getV(prev)>0.03;
+ trackHalt();Trk.cur=name;clearInterval(e._f);const tok=++MPtok;
+ const start=()=>{if(tok!==MPtok||Trk.cur!==name)return;if(prev)clearInterval(prev._f);e._v=0;mpSwitch(e);clearInterval(e._f);try{MP.currentTime=0;}catch(x){}
+  const up=()=>{if(Trk.cur!==name)return;let v=getV(e);clearInterval(e._f);e._f=setInterval(()=>{if(Trk.cur!==name){clearInterval(e._f);return;}v=Math.min(vol,v+0.06);setV(e,v);if(v>=vol)clearInterval(e._f);},40);};
+  e.play().then(up).catch(()=>{});up();};
+ if(busy)setTimeout(start,320);else start();}
+function stopAllMusic(){MPtok++;for(const k in FAC){const e=FAC[k];clearInterval(e._f);e._v=0;}clearInterval(Song.fadeT);if(MP){setV(MP,0);MP.pause();}Trk.cur=null;Trk.want=null;Song.playing=false;}
 function trackKick(){if(Trk.want&&!Song.playing)trackPlay(Trk.want);}
 function songPlay(vol,from){
- if(HEADLESS||typeof Audio==='undefined')return;
- try{if(!Song.el){Song.el=new Audio('theme.mp3');Song.el.preload='auto';Song.el.onended=()=>{Song.playing=false;trackKick();};}
-  trackHalt();
-  clearInterval(Song.fadeT);Song.vol=vol||0.8;setV(Song.el,META&&META.sound?Song.vol:0);if(from!=null)Song.el.currentTime=from;
-  const pr=Song.el.play();Song.playing=true;if(pr&&pr.catch)pr.catch(()=>{Song.playing=false;});}catch(e){Song.playing=false;}}
+ if(HEADLESS||!MP)return;
+ try{if(!Song.el){Song.el=fac('theme');Song.el.onended=()=>{Song.playing=false;trackKick();};}
+  const w=Trk.want;trackHalt();Trk.want=w;MPtok++;
+  clearInterval(Song.fadeT);Song.vol=vol||0.8;const e=Song.el;clearInterval(e._f);e._v=META&&META.sound?Song.vol:0;mpSwitch(e);if(from!=null){try{MP.currentTime=from;}catch(x){}}
+  Song.playing=true;e.play().catch(()=>{});}catch(x){Song.playing=false;}}
 function songStop(){
  if(!Song.el||!Song.playing)return;clearInterval(Song.fadeT);
  Song.fadeT=setInterval(()=>{const v=getV(Song.el)-0.06;if(v<=0.01){setV(Song.el,0);Song.el.pause();Song.playing=false;clearInterval(Song.fadeT);trackKick();}else setV(Song.el,v);},80);}
+function trkRetry(){if(HEADLESS||!MP)return;try{initAudio();}catch(x){}try{if(AC&&AC.state!=='running')AC.resume();}catch(x){}trkPill(false);TWD.since=0;
+ if(Song.playing&&Song.el){if(Song.el.paused&&!Song.el.ended)Song.el.play().catch(()=>{});return;}
+ const w=Trk.want;if(w){const e=fac(w);if(Trk.cur===w){if(e.paused&&!e.ended)e.play().catch(()=>{});}else if(!Trk.cur)trackKick();return;}
+ if(!MPok&&MP.paused&&MP._name){const f=FAC[MP._name];setV(MP,0);MP.play().then(()=>{if(!Trk.cur&&!Song.playing)MP.pause();}).catch(()=>{});}}
+['touchend','click','keydown'].forEach(ev=>window.addEventListener(ev,()=>{try{trkRetry();}catch(x){}},{capture:true,passive:true}));
+const TWD={since:0};
+setInterval(()=>{if(HEADLESS||!META||!META.sound||!MP)return;let bad=false;const n=Trk.cur;
+ if(n){const e=fac(n);if(e.paused&&!e.ended)bad=true;}if(Song.playing&&Song.el&&Song.el.paused&&!Song.el.ended)bad=true;
+ if(AC&&AC.state!=='running'&&(n||Song.playing)){try{AC.resume();}catch(x){}bad=true;}
+ if(!n&&Trk.want&&!Song.playing&&!Trk.hold){trackKick();}
+ if(!bad){TWD.since=0;trkPill(false);return;}if(!TWD.since)TWD.since=now();
+ if(now()-TWD.since>900){try{MP.play().catch(()=>{});}catch(x){}}
+ if(now()-TWD.since>2600&&TOUCH)trkPill(true);},800);
+function trkPill(on){let el=$('trkpill');if(!on){if(el)el.style.opacity=0;return;}if(!el){el=document.createElement('div');el.id='trkpill';el.style.cssText='position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:99;background:rgba(20,16,48,.82);color:#fff7e0;border:2px solid rgba(255,240,210,.8);border-radius:999px;padding:6px 14px;font:700 14px "Noto Sans JP",sans-serif;letter-spacing:.06em;pointer-events:none;transition:opacity .4s;opacity:0';el.textContent='♪ タップで 音楽を さいかい';document.body.appendChild(el);}el.style.opacity=1;}
 function tone(f,t,dur,type,vol,f2){const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||0.1,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g);g.connect(sfxBus);o.start(t);o.stop(t+dur+0.05);}
 function sfx(n){
@@ -2603,9 +2613,8 @@ function boot(){
  requestAnimationFrame(frame);
  const ft=$('ftitle');ft.innerHTML='<div class="l">よみこみ中…</div>';ft.classList.add('show');TITLE=true;
  let started=false;const go=()=>{if(started)return;started=true;ft.classList.remove('show');if(wake&&has&&META.dream)dreamWake();else showCtl(()=>titleScreen(has));};
- try{const e=new Audio('opening.mp3');e.loop=true;e.preload='auto';Trk.els.opening=e;e.addEventListener('canplaythrough',go,{once:true});e.addEventListener('error',go,{once:true});e.load();
-  ['town'].forEach(n=>{const t=new Audio(n+'.mp3');t.loop=true;t.preload='auto';Trk.els[n]=t;});
-  Song.el=new Audio('theme.mp3');Song.el.preload='metadata';Song.el.onended=()=>{Song.playing=false;trackKick();};}catch(x){go();}
+ try{if(!MP)throw 0;fac('opening');MP._name='opening';MP.src='opening.mp3';MP.loop=true;MP.addEventListener('canplaythrough',go,{once:true});MP.addEventListener('error',go,{once:true});MP.load();
+  Song.el=fac('theme');Song.el.onended=()=>{Song.playing=false;trackKick();};}catch(x){go();}
  setTimeout(go,9000);}
 if(!HEADLESS)boot();
 else{globalThis.__T={genFloor,startRun,tryMove,playerAttack,endTurn,useItem,throwItem,returnHome,climb,footAction,sleepStep,DIRS,bfs,
