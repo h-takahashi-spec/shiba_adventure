@@ -2138,6 +2138,7 @@ function drawTower(){
    if(SK>0)L.globalAlpha=1-0.66*SK;if(t===1)L.drawImage(T.fl[hv<0.72?0:hv<0.84?1:hv<0.93?2:3],sx,sy);else L.drawImage(T.co[hv<0.5?0:1],sx,sy);L.globalAlpha=1;
    if(!fl(x,y-1)){L.fillStyle='rgba(30,16,40,.2)';L.fillRect(sx,sy,32,4);}
    if(SK>0)spaceFloor(sx,sy,x,y,SK);}
+  if(!(t===0&&SK>=0.25&&!fl(x,y+1)&&!DIRS.some(([dx,dy])=>fl(x+dx,y+dy))))
   {let lt;if(LR&&x>=LR.x-1&&x<=LR.x+LR.w&&y>=LR.y-1&&y<=LR.y+LR.h)lt=1;else{const d=Math.max(Math.abs(x-ptx),Math.abs(y-pty));lt=clamp(2-d,0,1);}if(lt<1&&G.lit2){const [qx,qy]=tpos(G.lit2);lt=Math.max(lt,clamp(2.6-Math.max(Math.abs(x-qx),Math.abs(y-qy)),0,1));}
    if(lt<1){L.fillStyle=`rgba(10,8,24,${(0.5*(1-lt)).toFixed(3)})`;L.fillRect(sx,sy,32,32);}}}
  const see=(x,y)=>x>=x0-1&&x<=x1+1&&y>=y0-1&&y<=y1+1;
