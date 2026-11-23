@@ -2410,13 +2410,26 @@ function playStep(st,t,sp){
 function hookA(e){if(e._g||!AC||HEADLESS)return;try{const src=AC.createMediaElementSource(e),g=AC.createGain();src.connect(g);g.connect(AC.destination);e._g=g;e.volume=1;}catch(x){e._g=null;}}
 function setV(e,v){if(!e)return;hookA(e);if(e._g)e._g.gain.value=v;else e.volume=Math.max(0,Math.min(1,v));}
 function getV(e){if(!e)return 0;return e._g?e._g.gain.value:e.volume;}
-function trkUnlock(){if(HEADLESS||typeof Audio==='undefined'||!META)return;const need=[];
+function trkUnlock(){if(HEADLESS||typeof Audio==='undefined'||!META)return;if(SCN||AUTO||ROLL||FIN||HEND||(G&&(G.tcam||G.auto||G.lit2)))return;const need=[];
  if(G&&(G.epi||G.meet))need.push('opening');
  if(META.pastDone)need.push('ending','opening');
  if(G&&(G.past||G.ptown||(META.scarf&&META.clears>0)))need.push('past_theme','past_piano');
- for(const name of need){if(Trk.cur===name)continue;let e=Trk.els[name];if(e&&e._unl)continue;if(!e){e=Trk.els[name]=new Audio(name+'.mp3');e.loop=true;e.preload='auto';}
+ for(const name of need){if(Trk.cur===name)continue;let e=Trk.els[name];if(e&&(e._unl||e._used))continue;if(!e){e=Trk.els[name]=new Audio(name+'.mp3');e.loop=true;e.preload='auto';}
   e._unl=true;try{setV(e,0);e.muted=true;const p=e.play();const done=()=>{if(Trk.cur!==name){try{e.pause();e.currentTime=0;}catch(x){}}e.muted=false;};if(p&&p.then)p.then(done).catch(()=>{e._unl=false;e.muted=false;});else done();}catch(x){e._unl=false;}}}
 ['touchend','pointerup','keydown','click'].forEach(ev=>window.addEventListener(ev,()=>{try{trkUnlock();}catch(x){}},{capture:true,passive:true}));
+const TWD={t:0,ct:-1,since:0,el:null};
+setInterval(()=>{if(HEADLESS||!META||!META.sound)return;const n=Trk.cur,e=n&&Trk.els[n];let bad=false;
+ if(e&&!e.ended){const ct=e.currentTime||0;if(e.paused)bad=true;else if(ct===TWD.ct&&TWD.el===e)bad=true;TWD.ct=ct;TWD.el=e;}
+ if(AC&&AC.state&&AC.state!=='running'&&(n||Song.playing))bad=true;
+ if(Song.playing&&Song.el&&Song.el.paused&&!Song.el.ended)bad=true;
+ if(!bad){TWD.since=0;trkPill(false);return;}
+ if(!TWD.since)TWD.since=now();
+ try{if(AC&&AC.state!=='running')AC.resume().catch(()=>{});}catch(x){}
+ try{if(e&&e.paused&&!e.ended){const p=e.play();if(p&&p.catch)p.catch(()=>{});}if(Song.playing&&Song.el&&Song.el.paused&&!Song.el.ended){const p=Song.el.play();if(p&&p.catch)p.catch(()=>{});}}catch(x){}
+ if(now()-TWD.since>2200&&TOUCH)trkPill(true);},700);
+function trkPill(on){let el=$('trkpill');if(!on){if(el)el.style.opacity=0;return;}if(!el){el=document.createElement('div');el.id='trkpill';el.style.cssText='position:fixed;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);z-index:99;background:rgba(20,16,48,.82);color:#fff7e0;border:2px solid rgba(255,240,210,.8);border-radius:999px;padding:6px 14px;font:700 14px "Noto Sans JP",sans-serif;letter-spacing:.06em;pointer-events:none;transition:opacity .4s;opacity:0';el.textContent='♪ タップで 音楽を さいかい';document.body.appendChild(el);}el.style.opacity=1;}
+function trkRetry(){TWD.since=0;trkPill(false);if(HEADLESS)return;try{initAudio();}catch(x){}try{if(Song.playing&&Song.el&&Song.el.paused&&!Song.el.ended)Song.el.play().catch(()=>{});}catch(x){}const w=Trk.want;if(!w||Song.playing)return;const e=Trk.els[Trk.cur];if(Trk.cur===w&&e&&e.paused){const p=e.play();if(p&&p.catch)p.catch(()=>{});}else if(!Trk.cur)trackKick();}
+['touchend','click','keyup'].forEach(ev=>window.addEventListener(ev,()=>{setTimeout(()=>{},0);try{trkRetry();}catch(x){}},{passive:true}));
 const Trk={els:{},cur:null,want:null,hold:false},TRK_VOL={town:0.5,opening:0.6,past_piano:0.6,past_theme:0.8,past_jazz:0.5,ending:0.8};
 function trackHalt(){if(!Trk.cur)return;const e=Trk.els[Trk.cur];Trk.cur=null;let v=getV(e);clearInterval(e._f);e._f=setInterval(()=>{v-=0.07;if(v<=0.01){setV(e,0);e.pause();clearInterval(e._f);}else setV(e,v);},40);}
 function trackStop(){Trk.want=null;trackHalt();}
@@ -2567,8 +2580,8 @@ function showCtl(cb){const el=$('ctl');CTL=cb;if(TOUCH&&el.parentNode!==document
  const rows=TOUCH?[['左の パッド','いどう（すみの ボタンで ななめ）'],['こうげき','こうげき・はなす・けってい'],['どうぐ','どうぐ・もどる'],['あしもと','かいだん・ひろう'],['まつ（パッドの まんなか）','その場で 1ターン まつ'],['むき','ONの あいだ むきだけ かえる'],['メニュー','メニュー'],['ちず','右上の ちずを タップで 大きく']]
   :[['やじるし','いどう（2つ 同時おしで ななめ）'],['Enter','こうげき・はなす・けってい'],['X','どうぐ・もどる'],['C','あしもと（かいだん・ひろう）'],['S','その場で 1ターン まつ'],['Shift＋やじるし','むきだけ かえる'],['Tab','メニュー'],['M','ちずを 大きく'],['F','全画面']];
  el.innerHTML=`<h2>そうさ せつめい</h2><table>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</table><div class="go">${TOUCH?'画面を タッチして はじめる':'Enterキーで はじめる'}</div><div class="sub">このあと 音楽が ながれます</div>`;
- el.className='open';el.onpointerdown=e=>{e.preventDefault();endCtl();};}
-function endCtl(){if(!CTL)return;const cb=CTL;CTL=null;initAudio();sfx('blip');const el=$('ctl');el.className='';el.innerHTML='';el.onpointerdown=null;cb();trackKick();}
+ el.className='open';el.onpointerdown=e=>{e.preventDefault();};el.onpointerup=e=>{e.preventDefault();endCtl();};}
+function endCtl(){if(!CTL)return;const cb=CTL;CTL=null;initAudio();sfx('blip');const el=$('ctl');el.className='';el.innerHTML='';el.onpointerdown=null;el.onpointerup=null;cb();trackKick();}
 let btnMode='';
 function btnTick(){if(!TOUCH)return;const m=(CTL||PRO||TITLE||MENU||DLG||NAMING)?'m':(G&&G.mode==='town')?'t':'w';if(m===btnMode)return;btnMode=m;
  const A=$('bA'),B=$('bB');A.textContent=m==='m'?'けってい':m==='t'?'しらべる':'こうげき';B.textContent=m==='m'?'もどる':'どうぐ';B.classList.toggle('dim',m==='t');}
