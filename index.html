@@ -481,7 +481,7 @@ function bfs(sx,sy){const w=G.w,h=G.h,d=new Int16Array(w*h).fill(9999),q=new Int
 
 /* ====================== メッセージ・演出 ====================== */
 function msg(t){t=String(t).trim();G.log.push(t);if(G.log.length>80)G.log.shift();updateLog();}
-function fxText(x,y,text,color){FX.push({x,y,text:String(text),color,t:now()+ACT_DELAY});fxHook(x,y,color);requestRender();}
+function fxText(x,y,text,color){const d=ACT_DELAY;FX.push({x,y,text:String(text),color,t:now()+d,big:PROJ_HIT});if(d>0&&!HEADLESS)setTimeout(()=>fxHook(x,y,color),d);else fxHook(x,y,color);requestRender();}
 
 /* ====================== ターン処理 ====================== */
 function tryMove(dx,dy,turnOnly){
@@ -536,7 +536,7 @@ function attack(m){
  const c=eqOf('claw');if(c&&DB[c.id].special==='drain'&&G.p.hp<G.p.maxHp){const h=Math.min(G.p.maxHp-G.p.hp,1+Math.floor(d/6));G.p.hp+=h;}
  if(m.hp<=0)killMon(m);}
 function killMon(m){
- const T=MT[m.t];G.mons=G.mons.filter(x=>x!==m);burst(m.x,m.y,'#e8e0f4',16,1.6);ring(m.x,m.y,'#ffffff');
+ const T=MT[m.t];G.mons=G.mons.filter(x=>x!==m);{const d=ACT_DELAY,f=()=>{burst(m.x,m.y,'#e8e0f4',16,1.6);ring(m.x,m.y,'#ffffff');};if(d>0&&!HEADLESS){GHOST.push({m,until:now()+d});setTimeout(f,d);}else f();}
  let e=m.exp;if(hasCollar('exp'))e=Math.round(e*1.5);
  msg(`${T.name}を たおした！ けいけんち ${e}`);gainExp(e);
  if(m.loot)dropItem(m.x,m.y,{item:m.loot});
@@ -741,8 +741,8 @@ function onBook(){
 
 /* ====================== 帰還・ゲームオーバー ====================== */
 function gameOver(){
- if(G.dying)return;G.dying=true;inputLock=true;sfx('death');msg('目の前が まっしろに なった…');updateUI();
- setTimeout(()=>{inputLock=false;showDialog([`${META.name}は ${G.floor}階で たおれてしまった…`,`（${G.cause==='くうふく'?'おなかが すきすぎて':G.cause+'に やられて'}）`],()=>returnHome('death'));},900);}
+ if(G.dying)return;G.dying=true;inputLock=true;const _d=HEADLESS?0:ACT_DELAY;setTimeout(()=>{sfx('death');msg('目の前が まっしろに なった…');updateUI();},_d);
+ setTimeout(()=>{inputLock=false;showDialog([`${META.name}は ${G.floor}階で たおれてしまった…`,`（${G.cause==='くうふく'?'おなかが すきすぎて':G.cause+'に やられて'}）`],()=>returnHome('death'));},900+_d);}
 const DEATH_LINES=['おかえり。…いたかったね。','だいじょうぶ。まだ、ここに いるよ。','また 行くの？ …そっか。','ねてるあいだ、ずっと 足が うごいてたよ。ゆめでも のぼってたの？','きみが かえってくる場所が、ここで よかった。…たぶん。','どこまで 行ったの？ …ううん、いわなくて いい。'];
 function returnHome(kind){
  const p=G.p,fl=G.floor;META.best=Math.max(META.best,fl);
@@ -1528,6 +1528,7 @@ function drawTower(){
   const bob=it.item&&it.item.id==='book'?af:0;L.drawImage(it.gold?goldSpr():itemSpr(it.item),it.x*32-camX,it.y*32-camY-bob);L.globalAlpha=1;});
  const sight=hasCollar('sight'),list=[];
  G.mons.forEach(m=>{const i=m.y*w+m.x,M=MT[m.t];let show=vis[i]||sight;if(M.ab==='hidden'&&cheb(m,p)>1&&!sight)show=false;if(show&&see(m.x,m.y))list.push(m);});
+ {const tn=now();GHOST=GHOST.filter(g=>g.until>tn);GHOST.forEach(g=>{if(vis[g.m.y*w+g.m.x])list.push(g.m);});if(GHOST.length)requestRender();}
  list.push(p);list.sort((a,b)=>a.y-b.y);
  for(const m of list){if(m===p){drawPlayer();continue;}
   const M=MT[m.t],[px,py]=rpos(m),fly=m.t==='hachi'||m.t==='obake'||m.t==='kanashimi';
@@ -1535,7 +1536,7 @@ function drawTower(){
   put(monSpr(m.t,dirOf(m.face),m.sleep>0?0:af),px,py);L.globalAlpha=1;
   const tx=px+16-camX,ty=py+30-(MSZ[m.t]?MSZ[m.t][0]:32)-camY;
   if(m.sleep>0)glyphs('z',tx+11,ty-2-af*2,'#8ec5ff',1);
-  if(m.hp<m.maxHp){L.fillStyle='#2a1c30';L.fillRect(Math.round(tx-9),Math.round(ty-3),18,4);L.fillStyle='#ff8aa0';L.fillRect(Math.round(tx-8),Math.round(ty-2),Math.max(1,Math.round(16*m.hp/m.maxHp)),2);}}}
+  if(m.hp<m.maxHp){L.fillStyle='#2a1c30';L.fillRect(Math.round(tx-9),Math.round(ty-3),18,4);L.fillStyle='#ff8aa0';L.fillRect(Math.round(tx-8),Math.round(ty-2),Math.max(1,Math.round(16*Math.min(m.maxHp,Math.max(0,m.hp)+(m.pd&&m.pd.t>now()?m.pd.n:0))/m.maxHp)),2);}}}
 const TCH=(x,y)=>(y>=0&&y<TOWN.length&&x>=0&&x<TOWN[0].length)?TOWN[y][x]:(x===20&&y>=TOWN.length?':':'T');
 const GCH=(x,y)=>{const c=TCH(x,y);return c==='W'?':':c;};
 const LABELS=[['しあわせの塔',20.5,0.72,20,1,5],['よろずや',12,11.86,11.5,13,3],['犬小屋',29,20.3,28.5,21,3],['あの子の家',26,19.9,25.5,21,3],['ゲンじいの家',9,3.9,8.5,5,3],['ハナさんの家',33,4.9,32.5,6,3],['ケンタの家',13,19.9,12.5,21,3],['ふるい井戸',20.5,13.5,20,14,2]];
@@ -1600,8 +1601,8 @@ function updateUI(){
  if(G.mode==='town'&&G.epi){el.innerHTML='<b>おまつりの夜</b>';return;}
  if(G.mode==='town'){el.innerHTML=`<b>原っぱのまち</b><span>${DNAME[dif()]}</span><span>ちょきん ${META.bank}G</span><span>犬小屋 Lv${META.house}</span><span>さいこう ${META.best}F</span>`;return;}
  {const want=G.p.hunger<=10?'hungry':G.mhOn?'mhouse':musicFor(G.floor);if(Music.name!==want)setTheme(want);}
- const p=G.p,pct=Math.round(100*p.hp/p.maxHp),fp=Math.round(100*p.hunger/p.maxHunger),st=[];if(p.sleep)st.push('ねむり');if(p.confuse)st.push('こんらん');if(p.haste)st.push('はやあし');if(p.str<p.maxStr)st.push('どく');
- el.innerHTML=`<b>${G.down?'かえり道 ':''}${G.floor}F</b><span>Lv${p.lv}</span><span>HP ${p.hp}/${p.maxHp}<span class="bar${pct<30?' low':''}"><i style="width:${pct}%"></i></span></span><span class="${p.hunger<=10?'warn':''}">まんぷく<span class="bar fd"><i style="width:${fp}%"></i></span></span><span>${p.gold}G</span>${st.length?`<span class="st">${st.join('・')}</span>`:''}`;}
+ const p=G.p,hpS=Math.min(p.maxHp,p.hp+hpPend()),pct=Math.round(100*hpS/p.maxHp),fp=Math.round(100*p.hunger/p.maxHunger),st=[];if(p.sleep)st.push('ねむり');if(p.confuse)st.push('こんらん');if(p.haste)st.push('はやあし');if(p.str<p.maxStr)st.push('どく');
+ el.innerHTML=`<b>${G.down?'かえり道 ':''}${G.floor}F</b><span>Lv${p.lv}</span><span>HP ${hpS}/${p.maxHp}<span class="bar${pct<30?' low':''}"><i style="width:${pct}%"></i></span></span><span class="${p.hunger<=10?'warn':''}">まんぷく<span class="bar fd"><i style="width:${fp}%"></i></span></span><span>${p.gold}G</span>${st.length?`<span class="st">${st.join('・')}</span>`:''}`;}
 function hintTick(){
  let h='';if(!TITLE&&!MENU&&!DLG){if(G.mode==='town'){const c=townFacing();h=c==='G'||c==='B'||c==='N'?'Enter：はなす':c==='S'?'Enter：よろずやで かいもの':c==='D'?'Enter：犬小屋（どうぐを しまう・えらぶ）':c==='s'?'Enter：よむ':c==='^'?'Enter：塔に はいる':'HIJKW'.includes(c)&&c?'Enter：しらべる':'やじるし：いどう　Tab：メニュー';}
   else h=G.turn<12&&G.floor===1&&!G.down?'Enter：こうげき　X：どうぐ　Tab：メニュー':'';}
@@ -1900,7 +1901,8 @@ if(!HEADLESS)boot();
 else{globalThis.__T={genFloor,startRun,tryMove,playerAttack,endTurn,useItem,throwItem,returnHome,climb,footAction,sleepStep,DIRS,bfs,
  get G(){return G},set G(v){G=v},get META(){return META},set META(v){META=v},defaultMeta,toTown,get DLG(){return DLG},get MENU(){return MENU},advanceDlg,chooseMenu,cancelMenu,townInteract,TOWN,TNPC,npcTick,talkNpc,startEpilogue,endEpilogue,storageMenu};}
 /* ====================== 飛び道具 ====================== */
-const PROJ=[];
+const PROJ=[];let PROJ_HIT=false,GHOST=[],HP_PEND=[];
+function hpPend(){const t=now();HP_PEND=HP_PEND.filter(q=>q.t>t);return HP_PEND.reduce((s,q)=>s+q.n,0);}
 function shoot(kind,x0,y0,x1,y1,it){const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))||1,dur=kind==='fire'?Math.min(460,140+n*55):Math.min(420,90+n*42),t0=now()+ACT_DELAY;
  PROJ.push({kind,x0,y0,x1,y1,t0,dur,it});ANIM=Math.max(ANIM,t0+dur+40);if(!HEADLESS)setTimeout(()=>sfx(kind==='fire'?'fire':'throw'),Math.max(0,t0-now()));requestRender();return dur;}
 function drawProj(){const t=now();
@@ -1919,12 +1921,12 @@ function throwItem(it,dx,dy){
  let x=p.x,y=p.y,lx=x,ly=y,hit=null;
  for(let i=0;i<10;i++){if(!canStep(x,y,dx,dy))break;x+=dx;y+=dy;const m=monAt(x,y);
   if(m){if(chance(0.9)){hit=m;break;}msg('…はずれた');}lx=x;ly=y;}
- const d=shoot('item',p.x,p.y,hit?hit.x:lx,hit?hit.y:ly,it),old=ACT_DELAY;ACT_DELAY=old+d;
- try{if(hit)hitThrown(hit,it);else{dropItem(lx,ly,{item:it});const f=G.items.find(g=>g.item===it);if(f)f.hid=now()+d;}}finally{ACT_DELAY=old;}}
+ const d=shoot('item',p.x,p.y,hit?hit.x:lx,hit?hit.y:ly,it),old=ACT_DELAY;ACT_DELAY=old+d;PROJ_HIT=true;const hp0=hit?hit.hp:0,items0=new Set(G.items);
+ try{if(hit){hitThrown(hit,it);const lost=hp0-hit.hp;if(lost>0){hit.pd={n:lost,t:now()+ACT_DELAY};if(!HEADLESS)setTimeout(requestRender,d+10);}G.items.forEach(g=>{if(!items0.has(g))g.hid=now()+ACT_DELAY;});}else{dropItem(lx,ly,{item:it});const f=G.items.find(g=>g.item===it);if(f)f.hid=now()+d;}}finally{ACT_DELAY=old;PROJ_HIT=false;}}
 function breath(m){const dd=rr(16,24),p=G.p;m.face=[Math.sign(p.x-m.x),Math.sign(p.y-m.y)];m.atkT=now()+ACT_DELAY;
  msg(`${MT[m.t].name}は わるい ゆめを はきだした！ ${dd}の ダメージ`);
- const d=shoot('fire',m.x,m.y,p.x,p.y),old=ACT_DELAY;ACT_DELAY=old+d;
- try{fxText(p.x,p.y,dd,'#ff7b8a');burst(p.x,p.y,'#ffb347',14,1.4);if(!HEADLESS)setTimeout(()=>sfx('hurt'),d);damagePlayer(dd,MT[m.t].name);}finally{ACT_DELAY=old;}}
+ const d=shoot('fire',m.x,m.y,p.x,p.y),old=ACT_DELAY;ACT_DELAY=old+d;PROJ_HIT=true;
+ try{fxText(p.x,p.y,dd,'#ff7b8a');if(!HEADLESS)setTimeout(()=>{burst(p.x,p.y,'#ffb347',14,1.4);sfx('hurt');},d);HP_PEND.push({n:Math.min(dd,p.hp),t:now()+ACT_DELAY});if(!HEADLESS)setTimeout(updateUI,d+10);damagePlayer(dd,MT[m.t].name);}finally{ACT_DELAY=old;PROJ_HIT=false;}}
 
 function buyFx(it,i){const lines=['まいど！','ありがとねぇ。','いい ものを えらんだねぇ。','だいじに つかうんだよ。'];
  showDialog([`${itemName(it)}を かった！（のこり ${META.bank}G）`,{who:'おばあさん',t:pick(lines)+' 犬小屋に とどけておくよ。'}],()=>shopMenu(i));
