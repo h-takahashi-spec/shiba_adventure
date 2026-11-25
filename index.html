@@ -1377,6 +1377,7 @@ function cpItems(past){const c=(META.cp||{})[cpKey(past)]||{},fs=[50,75].filter(
 let FBURST=0;
 function cpMark(f){if(DEMO||G.auto||G.down)return;META.cp=META.cp||{};const k=cpKey(G.past),p=G.p;META.cp[k]=META.cp[k]||{};const had=!!META.cp[k][f];META.cp[k][f]={lv:p.lv,exp:p.exp,maxHp:p.maxHp,str:p.str,maxStr:p.maxStr};if(!had)setTimeout(()=>{if(G.floor===f){FBURST=now();sfx('magic');msg('星の おどりばを おぼえた。つぎからは、ここから のぼれる。');requestRender();}},2600);}
 {const _nf2=nextFloor;nextFloor=function(){if(CPF&&G.mode==='tower'&&G.floor===0){const f=CPF;CPF=0;const s=((META.cp||{})[cpKey(G.past)]||{})[f];if(s){const p=G.p;Object.assign(p,s);p.hp=p.maxHp;p.hunger=p.maxHunger;G.floor=f-1;}}_nf2();if(G.mode==='tower'&&!G.down&&(G.floor===50||G.floor===75))cpMark(G.floor);};}
+{const _nf3=nextFloor;nextFloor=function(){if(G.mode==='tower'&&!AUTO&&!G.auto&&Trk.want==='past_piano'){trackStop();Music.name=null;}_nf3();};}
 let FOUNT=[],FLAST=0;
 const FCOL=['255,214,110','255,248,220','255,150,190','120,210,255','190,160,255','150,240,200'];
 function fountBasin(){return spr('fbasin',48,40,c=>{const st=(x,y,r,col)=>{c.fillStyle=col;c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*0.55:r;c.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr*0.62);}c.closePath();c.fill();};
