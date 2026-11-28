@@ -1725,7 +1725,7 @@ function p2Open(){if(HEADLESS||META.p2seen){pastTown();return;}META.p2seen=1;sav
  document.body.classList.add('fin');FT_UNTIL=1e15;held.clear();armed.clear();stopAllMusic();Trk.hold=false;trackPlay('past_piano');P2={t0:now()};requestRender();
  const T=(ms,fn)=>setTimeout(fn,ms),say=s=>{cp.style.opacity=0;setTimeout(()=>{cp.textContent=s;cp.style.opacity=1;},700);};
  T(300,()=>blk.style.opacity=0);T(1800,()=>tx.style.opacity=1);
- T(4200,()=>say('むかし、あきらめなかった 犬が いた。'));T(9200,()=>say('その犬は、いちばん 上で、だれかを まっている。'));T(14200,()=>say('―― においだけが、時を こえる。'));
+ T(4200,()=>say('むかし、あきらめなかった 犬が いた。'));T(9200,()=>say('その犬は、いまも 塔の 上で、あきらめきれずに いる。'));T(14200,()=>say('―― においだけが、時を こえる。'));
  T(19000,()=>{blk.style.opacity=1;tx.style.opacity=0;cp.style.opacity=0;});
  T(21000,()=>{P2=null;document.body.classList.remove('fin');tx.remove();cp.remove();FT_UNTIL=0;trackStop();pastTown();blk.style.opacity=0;setTimeout(()=>blk.remove(),1900);});}
 function drawP2(){const t=now(),s=(t-P2.t0)/1000,ocx=camX,ocy=camY;camX=s*6;camY=-s*3;L.fillStyle='#06061a';L.fillRect(0,0,VW,VH);spaceBG(1);camX=ocx;camY=ocy;
@@ -2554,10 +2554,10 @@ function runHeartDemo(){closeModal();DEMO=true;HDEMO=true;TITLE=false;stopAllMus
 const SECRET3='ArrowLeft,ArrowLeft,ArrowRight,ArrowRight,ArrowUp,ArrowDown,ArrowUp,ArrowDown',KEY_DBG='shiba-happy-tower-debug';
 function secretDebug(){let has=false;try{has=!!localStorage.getItem(KEY_DBG);}catch(e){}
  const back=()=>{KEY='shiba-happy-tower-v1';titleScreen(TITLE_HAS);};
- const items=[{label:'① 第一部の エンディングから（帰還）',fn:debugStart},{label:'② 現代の 99階から（塔に なる 結末）',fn:()=>dbgTower(false)},{label:'③ むかしの 99階から（第二部の 結末）',fn:()=>dbgTower(true)},{label:'④ あの子との さいごの 会話から（ロール・Fin まで）',fn:dbgRoll},{label:'⑤ むかしの イベントを えらんで 見る',fn:dbgEvList}];
+ const items=[{label:'① 第一部の エンディングから（帰還）',fn:debugStart},{label:'② 現代の 99階から（塔に なる 結末）',fn:()=>dbgTower(false)},{label:'③ むかしの 99階から（第二部の 結末）',fn:()=>dbgTower(true)},{label:'④ あの子との さいごの 会話から（ロール・Fin まで）',fn:dbgRoll},{label:'⑤ むかしの イベントを えらんで 見る',fn:dbgEvList},{label:'⑥ 現代の 25階から（奥義と かえり道）',fn:dbg25}];
  if(has)items.push({label:'デバッグの つづきから',fn:()=>{KEY=KEY_DBG;if(load()){closeModal();titleScreen(true);}else back();}});
  items.push({label:'やめる',fn:back});
- openMenu({title:'デバッグモード',desc:'べつの きろくで あそびます。（ふだんの きろくは かわりません）\n倉庫は つよい どうぐで いっぱい。②③は レベル60で はじまります。④は 会話の あと、ロールが ながれます。\n②で 塔に なっても、デバッグの きろくは きえません。',isTitle:true,items,onCancel:back});}
+ openMenu({title:'デバッグモード',desc:'べつの きろくで あそびます。（ふだんの きろくは かわりません）\n倉庫は つよい どうぐで いっぱい。②③は レベル60で はじまります。④は 会話の あと、ロールが ながれます。⑥は レベル40で 25階の 奥義の ちかくから。\n②で 塔に なっても、デバッグの きろくは きえません。',isTitle:true,items,onCancel:back});}
 function dbgMeta(demo){closeModal();Trk.hold=false;if(!demo)KEY=KEY_DBG;DEMO=!!demo;HDEMO=false;TITLE=false;stopAllMusic();META=defaultMeta();META.diff=1;META.clears=1;META.best=25;META.bank=99999;META.house=4;
  const add=(id,pl,n)=>{for(let i=0;i<(n||1);i++){if(META.storage.length>=STORAGE_MAX)return;const it=mkItem(id,pl||0);it.idf=true;META.storage.push(it);}};
  add('c7',9);add('b7',9);add('c6',5);add('b6',5);['k1','k2','k3','k4','k5','k6','k7','k8','k9'].forEach(k=>add(k));add('a1',0,4);['a3','a4','a6','a7','a9'].forEach(k=>add(k));add('h2',0,5);add('h4',0,2);add('f2',0,5);add('t1',0,3);add('h2',0,40);
@@ -2583,6 +2583,16 @@ function dbgTower(past,demo){dbgMeta(demo);META.scarf=1;META.p2seen=1;META.best=
  p.lv=60;p.exp=expFor(60);p.maxHp=p.hp=360;
  p.inv=[mk('c7',9,1),mk('b7',9,1),mk('k1',0,1),mk('f2'),mk('f2'),mk('f2'),mk('h2'),mk('h2'),mk('h2'),mk('h2'),mk('h4'),mk('hs'),mk('hs'),mk('a1'),mk('a9'),mk('a9'),mk('t1'),mk('t1'),mk('t1')];
  G.floor=98;nextFloor();closeModal();save();updateUI();}
+function dbg25(){dbgMeta();META.clears=0;META.best=24;
+ G={mode:'town',log:[],p:{x:23,y:22,face:[0,-1]},floor:0};PAST_NEXT=false;startRun();closeModal();
+ const p=G.p,mk=(id,pl,eq)=>{const it=mkItem(id,pl||0);it.idf=true;if(eq)it.eq=true;G.known[id]=true;return it;};
+ p.lv=40;p.exp=expFor(40);p.maxHp=p.hp=260;
+ p.inv=[mk('c7',9,1),mk('b7',9,1),mk('k1',0,1),mk('f2'),mk('f2'),mk('f2'),mk('h2'),mk('h2'),mk('h2'),mk('h4'),mk('a9'),mk('t1'),mk('t1')];
+ G.floor=24;nextFloor();closeModal();
+ const b=G.items.find(i=>i.item&&i.item.id==='book');
+ if(b){const d=bfs(b.x,b.y);let best=null;for(let y=0;y<G.h;y++)for(let x=0;x<G.w;x++){const v=d[y*G.w+x];if(v>=3&&v<=4&&passable(x,y)&&!G.mons.some(m=>m.x===x&&m.y===y)){best=[x,y];break;}}
+  if(best){TW.delete(p);p.x=best[0];p.y=best[1];}}
+ G.log=[];updateLog();computeVis();save();updateUI();snapView();setTimeout(()=>msg('ちかくに しあわせの奥義が あります。'),300);}
 function secretEnding(){openMenu({title:'？？？',desc:'エンディングだけを みる？\n（いまの きろくは かわりません）',isTitle:true,items:[{label:'みる',fn:runDemo},{label:'やめる',fn:()=>titleScreen(TITLE_HAS)}],onCancel:()=>titleScreen(TITLE_HAS)});}
 function runDemo(){closeModal();DEMO=true;TITLE=false;stopAllMusic();
  G={mode:'town',log:[],p:{x:23,y:22,face:[0,-1]},floor:0};toTown();endMeet();updateUI();trackPlay('town');
