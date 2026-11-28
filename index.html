@@ -750,7 +750,7 @@ function onBook(){
  let best=null,bd=-1;for(let k=0;k<80;k++){const t=randFree();if(!t)continue;const d=cheb(t,G.p);if(d>bd){bd=d;best=t;}}
  G.stairs=best||{x:G.p.x,y:G.p.y};G.exp[G.stairs.y*G.w+G.stairs.x]=1;
  msg('どこかに くだりかいだんが あらわれた。');
- setTheme(musicFor(G.floor));trackPlay('opening');
+ setTheme(musicFor(G.floor));if(!(G.p.hunger<=10||G.mhOn)){trackPlay('opening');DPIANO={f:G.floor,t:now()};}
  showDialog(['本を くわえた とたん、とおくで オルゴールの音が きこえた 気がした。','かえりみちのお守りは、もう きかない。','25階から 1階まで、じぶんの足で おりていこう。']);}
 
 /* ====================== 帰還・ゲームオーバー ====================== */
@@ -2443,9 +2443,10 @@ function trackPlay(name){
   e.play().then(up).catch(()=>{});up();};
  if(busy)setTimeout(start,320);else start();}
 function stopAllMusic(){MPtok++;for(const k in FAC){const e=FAC[k];clearInterval(e._f);e._v=0;}clearInterval(Song.fadeT);if(MP){setV(MP,0);MP.pause();}Trk.cur=null;Trk.want=null;Song.playing=false;}
-function downTrack(){if(HEADLESS||!G||G.mode!=='tower')return;const dt=G.down&&!G.auto&&!G.past;
- if(dt&&G.p&&G.p.hunger>10){if(!Trk.want&&!Trk.cur&&!Song.playing&&!Trk.hold&&!SCN)trackPlay('opening');}
- else if(Trk.want==='opening'||Trk.cur==='opening')trackStop();}
+let DPIANO=null;
+function downTrack(){if(HEADLESS||!G)return;if(!DPIANO)return;
+ if(Trk.want!=='opening'&&Trk.cur!=='opening'){DPIANO=null;return;}
+ if(G.mode!=='tower'||G.floor!==DPIANO.f||now()-DPIANO.t>180000||(G.p&&G.p.hunger<=10)||G.mhOn){DPIANO=null;Music.name=null;trackFade(G.mode==='tower'&&G.floor===25?4000:1200);}}
 function trackKick(){if(Trk.want&&!Song.playing)trackPlay(Trk.want);}
 function songPlay(vol,from){
  if(HEADLESS||!MP)return;
@@ -2464,6 +2465,7 @@ function trkRetry(){if(HEADLESS||!MP)return;if(Song.retry&&!Song.playing&&!Trk.c
  if(!MPok&&MP.paused&&MP._name){const f=FAC[MP._name];setV(MP,0);MP.play().then(()=>{if(!Trk.cur&&!Song.playing)MP.pause();}).catch(()=>{});}}
 ['touchend','click','keydown'].forEach(ev=>window.addEventListener(ev,()=>{try{trkRetry();}catch(x){}},{capture:true,passive:true}));
 const TWD={since:0};
+setInterval(()=>{try{downTrack();}catch(x){}},1000);
 setInterval(()=>{if(HEADLESS||!META||!META.sound||!MP)return;let bad=false;const n=Trk.cur;
  if(n){const e=fac(n);if(e.paused&&!e.ended)bad=true;}if(Song.playing&&Song.el&&Song.el.paused&&!Song.el.ended)bad=true;
  if(AC&&AC.state!=='running'&&(n||Song.playing)){try{AC.resume();}catch(x){}bad=true;}
